@@ -1,0 +1,175 @@
+Ex. 11
+KF Sensor: Honeypot Setup and Network Monitoring
+AIM: To set up a honeypot using KFSensor and monitor attacker activity on the network.
+
+Theory
+A honeypot is a security mechanism designed to detect, deflect, and study unauthorized system access attempts. It
+appears to be a legitimate target to attackers but is actually isolated and monitored. Every connection to a
+honeypot is suspicious by definition.
+Types of Honeypots
+• Low-Interaction: Simulates limited services. Easy to deploy. Less data. Example: KFSensor, Honeyd.
+• High-Interaction: Full OS and real services. More realistic. More data but higher risk. Example: Honeynet.
+• Research Honeypot: Collects threat intelligence about attacker TTPs.
+• Production Honeypot: Deployed to detect intrusions in live environments.
+KFSensor Features
+• Runs on Windows. Simulates common services: HTTP, FTP, SMTP, POP3, SMB, Telnet, SSH.
+• Logs: source IP, port, protocol, timestamp, data sent by attacker.
+• Sends real-time alerts via email when connections detected.
+• Includes network traffic capture (PCAP) and pattern matching.
+• Dashboard shows attack statistics by protocol, source country, time.
+Part A – KFSensor Installation and Setup
+Step 1: Download and Install
+1. Download KFSensor from: http://www.keyfocus.net/kfsensor/
+→ Select: KFSensor v5.x Standard or Trial version
+2. Run the installer: KFSensor_Setup.exe
+→ Click Next → Accept License → Choose install path
+→ Complete installation
+3. Launch KFSensor as Administrator:
+→ Start Menu → KFSensor → Run as Administrator
+Step 2: Configure Simulated Services
+4. Wizard setup on first launch:
+→ Select: "Typical" setup (recommended)
+Simulated Services to ENABLE:
+✓ HTTP (Port 80) - Web server simulation
+✓ FTP (Port 21) - File transfer simulation
+✓ SMTP (Port 25) - Email server simulation
+✓ POP3 (Port 110) - Email retrieval simulation
+✓ SSH (Port 22) - Secure shell simulation
+✓ Telnet(Port 23) - Remote login simulation
+✓ SMB (Port 445) - Windows file sharing
+✓ MySQL (Port 3306) - Database simulation
+5. In Main Window → Settings → Sensors → Edit each sensor:
+→ Response Type: Standard banner (makes service look real)
+
+→ Enable: "Log event to database"
+→ Enable: "Send email alert" (configure SMTP server)
+Step 3: Start Monitoring
+6. Click "Start" button (green triangle) in KFSensor toolbar
+→ Status bar shows: "Monitoring Active"
+7. Dashboard panels visible:
+→ Event Log: Real-time connection attempts
+→ Visitor Map: World map showing attacker locations
+→ Statistics: Protocol breakdown, event counts
+→ Packet Data: Raw bytes sent by attacker
+Part B – Testing the Honeypot
+From another machine on the network (or using loopback for testing):
+# ─── Test from another machine ───────────────────────
+# Check if KFSensor is "listening"
+nmap -sS -p 21,22,23,25,80,110,445,3306 HONEYPOT_IP
+# Connect to simulated FTP service:
+ftp HONEYPOT_IP
+# KFSensor shows: [EVENT] FTP connection from YOUR_IP:PORT
+# Connect to simulated HTTP:
+curl http://HONEYPOT_IP
+# Returns fake HTTP response; KFSensor logs the request
+# Connect to simulated Telnet:
+telnet HONEYPOT_IP 23
+# KFSensor shows banner, logs connection attempt
+# ─── Python script to test multiple ports ────────────
+import socket
+import datetime
+HONEYPOT_IP = "192.168.1.50" # Replace with actual honeypot IP
+PORTS = [21, 22, 23, 25, 80, 110, 3306]
+print(f"Testing honeypot at {HONEYPOT_IP}")
+print(f"Time: {datetime.datetime.now()}")
+print("-" * 40)
+for port in PORTS:
+try:
+s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+s.settimeout(2)
+result = s.connect_ex((HONEYPOT_IP, port))
+if result == 0:
+banner = s.recv(1024).decode(errors="ignore").strip()
+print(f"Port {port:5d}: OPEN | Banner: {banner[:40]}")
+else:
+print(f"Port {port:5d}: CLOSED")
+s.close()
+except Exception as e:
+print(f"Port {port:5d}: Error - {e}")
+Testing honeypot at 192.168.1.50
+Time: 2025-01-15 10:30:45
+----------------------------------------
+Port 21: OPEN | Banner: 220 FTP Server Ready
+
+Port 22: OPEN | Banner: SSH-2.0-OpenSSH_7.4
+Port 23: OPEN | Banner: Welcome to Telnet
+Port 25: OPEN | Banner: 220 SMTP Server
+Port 80: OPEN | Banner: HTTP/1.1 200 OK
+Port 110: OPEN | Banner: +OK POP3 Server
+Port 3306: OPEN | Banner: J 5.7.32-MySQL Community
+Part C – Monitoring and Log Analysis
+Viewing Events in KFSensor
+1. Main Window → View → Event Log
+→ Columns: Time, Source IP, Port, Protocol, Bytes, Data
+2. Double-click any event to see full packet data:
+→ Hex dump of data sent by attacker
+→ ASCII representation
+3. Right-click event → "Block Sender" to add to firewall block list
+4. View → Statistics:
+→ Most attacked services
+→ Top source countries
+→ Attack timeline graph
+Exporting and Analyzing Logs
+# ─── From KFSensor Interface ─────────────────────────
+# File → Export Events → CSV format
+# Choose date range, select all protocols
+# Save as: honeypot_events.csv
+# ─── Analyze logs with Python ────────────────────────
+import csv
+from collections import Counter
+import datetime
+# Read KFSensor exported CSV log
+events = []
+with open("honeypot_events.csv", "r") as f:
+reader = csv.DictReader(f)
+for row in reader:
+events.append(row)
+print(f"Total Events Logged: {len(events)}")
+# Top attacker IPs
+src_ips = [e["Source IP"] for e in events]
+top_ips = Counter(src_ips).most_common(5)
+print("\nTop 5 Attacker IPs:")
+for ip, count in top_ips:
+print(f" {ip:20s} : {count} attempts")
+# Most targeted services
+protocols = [e["Protocol"] for e in events]
+top_protocols = Counter(protocols).most_common()
+print("\nMost Targeted Services:")
+for proto, count in top_protocols:
+print(f" {proto:10s} : {count} connections")
+Total Events Logged: 847
+Top 5 Attacker IPs:
+
+185.234.xxx.xxx : 312 attempts (Eastern Europe)
+103.21.xxx.xxx : 198 attempts (Asia-Pacific)
+45.142.xxx.xxx : 156 attempts (Russia)
+91.108.xxx.xxx : 89 attempts (Netherlands)
+172.58.xxx.xxx : 92 attempts (USA)
+Most Targeted Services:
+SSH : 423 connections (brute force attempts)
+HTTP : 198 connections (web scanning)
+FTP : 112 connections (login attempts)
+SMTP : 67 connections (spam relay attempts)
+MySQL : 47 connections (database scanning)
+Sample Honeypot Event Log Table
+Time Source IP Port Protocol Captured Data
+10:30:15 185.234.1.22 22 SSH SSH-2.0 client connection attempt
+10:31:42 103.21.5.88 21 FTP USER anonymous\r\nPASS
+
+test@test.com
+
+10:33:01 45.142.3.7 80 HTTP GET /phpmyadmin/ HTTP/1.1
+10:35:20 91.108.9.15 3306 MySQL MySQL client handshake probe
+10:37:55 172.58.4.3 25 SMTP EHLO attacker.com\nRCPT TO: ...
+
+Part D – Honeypot Security Precautions
+• NEVER deploy a high-interaction honeypot without strict firewall rules — attackers may use it to pivot.
+• Place honeypot on isolated VLAN/subnet, not on production network.
+• Monitor honeypot logs regularly — it is the detector, not a defender.
+• Never store real data on the honeypot system.
+• Install only necessary software on the honeypot machine.
+• Document all honeypot activity for legal/forensic purposes.
+• KFSensor's email alerts: configure only for critical events to avoid alert fatigue.
+RESULT: Successfully set up KFSensor honeypot on Windows, configured simulated services (HTTP, FTP,
+SSH, SMTP, MySQL), monitored incoming attack attempts, analyzed logs, and identified attacker patterns
+including top source IPs and targeted services.    in this all the expirements i need sql code with output in one text file like that all the sql and also python all the code give me zip file

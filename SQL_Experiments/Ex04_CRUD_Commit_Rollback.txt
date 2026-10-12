@@ -1,0 +1,115 @@
+EXP-4
+
+-- ── 1. TABLE, SEQUENCE & TRIGGER CREATION ──────────────
+
+CREATE TABLE Student (
+    student_id INT PRIMARY KEY,
+    name VARCHAR2(50) NOT NULL,
+    email VARCHAR2(80) UNIQUE,
+    dept_id INT NOT NULL,
+    cgpa NUMBER(4,2) DEFAULT 0.0 CHECK (cgpa BETWEEN 0 AND 10),
+    join_date DATE DEFAULT SYSDATE
+);
+
+-- Sequence to emulate AUTO_INCREMENT functionality
+CREATE SEQUENCE student_seq START WITH 1 INCREMENT BY 1;
+
+-- Trigger to automatically insert sequence value on primary key
+CREATE OR REPLACE TRIGGER trg_student_id
+BEFORE INSERT ON Student
+FOR EACH ROW
+BEGIN
+    IF :NEW.student_id IS NULL THEN
+        SELECT student_seq.NEXTVAL INTO :NEW.student_id FROM dual;
+    END IF;
+END;
+/
+
+
+-- ── 2. DATA INSERTION ──────────────────────────────────
+
+INSERT INTO Student (name, email, dept_id, cgpa) VALUES ('Priya S', 'priya@mail.com', 1, 9.2);
+INSERT INTO Student (name, email, dept_id, cgpa) VALUES ('Arjun K', 'arjun@mail.com', 2, 8.7);
+INSERT INTO Student (name, email, dept_id, cgpa) VALUES ('Deepika R', 'deepika@mail.com', 1, 9.5);
+INSERT INTO Student (name, email, dept_id, cgpa) VALUES ('Ravi M', 'ravi@mail.com', 3, 7.8);
+INSERT INTO Student (name, email, dept_id, cgpa) VALUES ('Kavya P', 'kavya@mail.com', 1, 8.9);
+
+COMMIT;
+
+
+-- ── 3. DATA VERIFICATION & SEQUENTIAL TRANSACTIONS ────
+
+-- SQL*Plus System layout setups
+SET PAGESIZE 60;
+SET LINESIZE 120;
+COLUMN name FORMAT A12;
+COLUMN email FORMAT A18;
+
+-- Step A: Initial Select Verification
+SELECT student_id, name, dept_id, cgpa FROM Student;
+
+-- Step B: Update and Check Row 
+UPDATE Student SET cgpa=9.0 WHERE name='Ravi M';
+SELECT name, cgpa FROM Student WHERE name='Ravi M';
+
+-- Step C: Delete Verification
+DELETE FROM Student WHERE student_id=5;
+SELECT student_id, name FROM Student;
+
+-- Step D: Committed Transaction Block
+-- In Oracle, transactions start automatically on the first DML statement
+INSERT INTO Student (name, email, dept_id, cgpa) VALUES ('Test', 'test@mail.com', 1, 5.0);
+COMMIT;
+SELECT name, cgpa FROM Student WHERE name='Test';
+
+-- Step E: Rollback Transaction Block
+UPDATE Student SET cgpa=0.0 WHERE dept_id=1;
+ROLLBACK;
+SELECT name, cgpa FROM Student WHERE dept_id=1;
+
+------------------
+OUTPUT
+------------------
+
+Step A Output (Initial Select)
+
+STUDENT_ID NAME            DEPT_ID       CGPA
+---------- ------------ ---------- ----------
+         1 Priya S               1        9.2
+         2 Arjun K               2        8.7
+         3 Deepika R             1        9.5
+         4 Ravi M                3        7.8
+         5 Kavya P               1        8.9
+
+Step B Output (After Update Query)
+
+NAME               CGPA
+------------ ----------
+Ravi M                9
+
+Step C Output (After Delete Operation)
+
+STUDENT_ID NAME        
+---------- ------------
+         1 Priya S     
+         2 Arjun K     
+         3 Deepika R   
+         4 Ravi M    
+
+Step D Output (Following COMMIT Action)
+
+NAME               CGPA
+------------ ----------
+Test                  5  
+
+Step E Output (Following ROLLBACK Action)
+
+NAME               CGPA
+------------ ----------
+Priya S              9.2
+Deepika R            9.5
+
+
+
+
+

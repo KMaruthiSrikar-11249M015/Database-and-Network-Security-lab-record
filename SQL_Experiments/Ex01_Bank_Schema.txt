@@ -1,0 +1,151 @@
+EXP-1
+
+-- ── 1. TABLE CREATION ──────────────────────────────────
+
+CREATE TABLE Branch (
+    branch_id INT PRIMARY KEY,
+    branch_name VARCHAR2(50) NOT NULL,
+    city VARCHAR2(30),
+    address VARCHAR2(100)
+);
+
+CREATE TABLE Customer (
+    customer_id INT PRIMARY KEY,
+    name VARCHAR2(50) NOT NULL,
+    address VARCHAR2(100),
+    phone VARCHAR2(15),
+    email VARCHAR2(50)
+);
+
+CREATE TABLE Account (
+    account_no INT PRIMARY KEY,
+    account_type VARCHAR2(10) NOT NULL,
+    balance NUMBER(12,2) DEFAULT 0.00,
+    open_date DATE,
+    customer_id INT,
+    branch_id INT,
+    FOREIGN KEY (customer_id) REFERENCES Customer(customer_id),
+    FOREIGN KEY (branch_id) REFERENCES Branch(branch_id),
+    CONSTRAINT chk_account_type CHECK (account_type IN ('Savings', 'Current'))
+);
+
+CREATE TABLE Transactions (
+    txn_id INT PRIMARY KEY,
+    txn_date DATE,
+    txn_type VARCHAR2(15),
+    amount NUMBER(10,2),
+    account_no INT,
+    FOREIGN KEY (account_no) REFERENCES Account(account_no),
+    CONSTRAINT chk_txn_type CHECK (txn_type IN ('Deposit', 'Withdrawal'))
+);
+
+CREATE TABLE Loan (
+    loan_id INT PRIMARY KEY,
+    loan_type VARCHAR2(30),
+    loan_amount NUMBER(12,2),
+    interest_rate NUMBER(5,2),
+    branch_id INT,
+    FOREIGN KEY (branch_id) REFERENCES Branch(branch_id)
+);
+
+CREATE TABLE Customer_Loan (
+    customer_id INT,
+    loan_id INT,
+    apply_date DATE,
+    PRIMARY KEY (customer_id, loan_id),
+    FOREIGN KEY (customer_id) REFERENCES Customer(customer_id),
+    FOREIGN KEY (loan_id) REFERENCES Loan(loan_id)
+);
+
+
+-- ── 2. DATA INSERTION ──────────────────────────────────
+
+INSERT INTO Branch VALUES (1, 'Main Branch', 'Chennai', 'Anna Salai');
+INSERT INTO Customer VALUES (1, 'Priya', 'Chennai', '9876543210', 'priya@mail.com');
+INSERT INTO Account VALUES (101, 'Savings', 5000.00, TO_DATE('2026-01-10', 'YYYY-MM-DD'), 1, 1);
+INSERT INTO Transactions VALUES (1001, TO_DATE('2026-01-11', 'YYYY-MM-DD'), 'Deposit', 1000.00, 101);
+INSERT INTO Loan VALUES (501, 'Education', 50000.00, 8.50, 1);
+INSERT INTO Customer_Loan VALUES (1, 501, TO_DATE('2026-01-12', 'YYYY-MM-DD'));
+
+COMMIT;
+
+
+-- ── 3. DATA VERIFICATION & QUERIES ─────────────────────
+
+-- SQL*Plus Formatting commands for clean output terminal layout
+SET PAGESIZE 50;
+SET LINESIZE 120;
+COLUMN branch_name FORMAT A15;
+COLUMN city FORMAT A10;
+COLUMN address FORMAT A15;
+COLUMN name FORMAT A10;
+COLUMN email FORMAT A15;
+
+SELECT * FROM Branch;
+SELECT * FROM Customer;
+SELECT * FROM Account;
+SELECT * FROM Transactions;
+SELECT * FROM Loan;
+SELECT * FROM Customer_Loan;
+
+
+Branch Table:
+
+ BRANCH_ID BRANCH_NAME     CITY       ADDRESS
+---------- --------------- ---------- ---------------
+         1 Main Branch     Chennai    Anna Salai
+
+Customer Table
+
+CUSTOMER_ID NAME       ADDRESS         PHONE           EMAIL
+----------- ---------- --------------- --------------- ---------------
+          1 Priya      Chennai         9876543210      priya@mail.com
+
+Account Table
+
+ACCOUNT_NO ACCOUNT_TY    BALANCE OPEN_DATE CUSTOMER_ID  BRANCH_ID
+---------- ---------- ---------- --------- ----------- ----------
+       101 Savings          5000 10-JAN-26           1          1
+
+Transactions Table
+
+    TXN_ID TXN_DATE  TXN_TYPE            AMOUNT ACCOUNT_NO
+---------- --------- --------------- ---------- ----------
+      1001 11-JAN-26 Deposit               1000        101
+
+Loan Table
+
+   LOAN_ID LOAN_TYPE                      LOAN_AMOUNT INTEREST_RATE  BRANCH_ID
+---------- ------------------------------ ----------- ------------- ----------
+       501 Education                            50000           8.5          1
+
+Customer_Loan Table
+
+CUSTOMER_ID    LOAN_ID APPLY_DAT
+----------- ---------- ---------
+          1        501 12-JAN-26
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

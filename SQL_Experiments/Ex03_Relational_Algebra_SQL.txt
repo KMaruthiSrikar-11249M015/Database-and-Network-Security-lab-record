@@ -1,0 +1,192 @@
+EXP-3
+
+-- ── 1. TABLE CREATION ──────────────────────────────────
+
+CREATE TABLE STUDENT (
+    student_id INT PRIMARY KEY, 
+    name VARCHAR2(50), 
+    dept_id VARCHAR2(10), 
+    cgpa NUMBER(3,2)
+);
+
+CREATE TABLE COURSE (
+    course_id VARCHAR2(10) PRIMARY KEY, 
+    title VARCHAR2(80), 
+    dept_id VARCHAR2(10), 
+    credits INT
+);
+
+CREATE TABLE ENROLLMENT (
+    student_id INT, 
+    course_id VARCHAR2(10), 
+    semester VARCHAR2(10), 
+    grade CHAR(2)
+);
+
+
+-- ── 2. DATA INSERTION ──────────────────────────────────
+
+INSERT INTO STUDENT VALUES (1, 'Priya', 'CSE', 9.20);
+INSERT INTO STUDENT VALUES (2, 'Arjun', 'ECE', 8.10);
+INSERT INTO STUDENT VALUES (3, 'Kavya', 'CSE', 7.80);
+
+INSERT INTO COURSE VALUES ('CS301', 'DBMS', 'CSE', 4);
+INSERT INTO COURSE VALUES ('EC201', 'Circuits', 'ECE', 3);
+
+INSERT INTO ENROLLMENT VALUES (1, 'CS301', 'S5', 'A');
+INSERT INTO ENROLLMENT VALUES (2, 'EC201', 'S5', 'B');
+
+COMMIT;
+
+
+-- ── 3. DATA VERIFICATION & SEPARATE QUERIES ────────────
+
+-- SQL*Plus System layout setups
+SET PAGESIZE 60;
+SET LINESIZE 120;
+COLUMN name FORMAT A12;
+COLUMN title FORMAT A12;
+COLUMN dept_id FORMAT A10;
+COLUMN semester FORMAT A10;
+
+-- Query 1: Selection on Department
+SELECT * FROM STUDENT WHERE dept_id='CSE';
+
+-- Query 2: Projection on Name and CGPA
+SELECT name, cgpa FROM STUDENT;
+
+-- Query 3: Multi-condition Selection
+SELECT * FROM STUDENT WHERE dept_id='CSE' AND cgpa>8.0;
+
+-- Query 4: Joins for a Specific Course Enrollment
+SELECT DISTINCT s.name FROM STUDENT s JOIN ENROLLMENT e ON s.student_id=e.student_id WHERE e.course_id='CS301';
+
+-- Query 5: Full Inner Join between Student and Enrollment
+SELECT s.student_id, s.name, e.course_id, e.semester, e.grade FROM STUDENT s JOIN ENROLLMENT e ON s.student_id=e.student_id;
+
+-- Query 6: Filter by Credit Limits
+SELECT * FROM COURSE WHERE credits=3;
+
+-- Query 7: Left Outer Join for Non-Enrolled Students
+SELECT s.student_id FROM STUDENT s LEFT JOIN ENROLLMENT e ON s.student_id=e.student_id WHERE e.student_id IS NULL;
+
+-- Query 8: Table Aliasing View (Removed 'AS' keyword on table alias to follow Oracle rules)
+SELECT * FROM STUDENT S;
+
+-- Query 9: Set Union Operation
+SELECT * FROM COURSE WHERE dept_id='CSE' UNION SELECT * FROM COURSE WHERE dept_id='ECE';
+
+-- Query 10: Multi-Table Join Query
+SELECT DISTINCT s.name FROM STUDENT s JOIN ENROLLMENT e ON s.student_id=e.student_id JOIN COURSE c ON e.course_id=c.course_id WHERE c.credits>3;
+
+
+
+
+---------------------------------
+OUTPUT
+---------------------------------
+
+Query 1 Output (Selection on Department)
+
+STUDENT_ID NAME         DEPT_ID          CGPA
+---------- ------------ ---------- ----------
+         1 Priya        CSE               9.2
+         3 Kavya        CSE              7.8
+
+Query 2 Output (Projection on Name and CGPA)
+NAME               CGPA
+------------ ----------
+Priya               9.2
+Arjun               8.1
+Kavya               7.8
+
+Query 3 Output (Multi-condition Selection)
+
+STUDENT_ID NAME         DEPT_ID          CGPA
+---------- ------------ ---------- ----------
+         1 Priya        CSE               9.2
+
+Query 4 Output (Joins for a Specific Course Enrollment)
+
+NAME        
+------------
+Priya  
+
+Query 5 Output (Full Inner Join between Student and Enrollment)
+
+STUDENT_ID NAME         COURSE_ID  SEMESTER   GR
+---------- ------------ ---------- ---------- --
+         1 Priya        CS301      S5         A 
+         2 Arjun        EC201      S5         B      
+
+Query 6 Output (Filter by Credit Limits)
+
+COURSE_ID  TITLE        DEPT_ID       CREDITS
+---------- ------------ ---------- ----------
+EC201      Circuits     ECE                 3
+
+Query 7 Output (Left Outer Join for Non-Enrolled Students)
+
+STUDENT_ID
+----------
+         3
+
+Query 8 Output (Table Aliasing View)
+
+STUDENT_ID NAME         DEPT_ID          CGPA
+---------- ------------ ---------- ----------
+         1 Priya        CSE               9.2
+         2 Arjun        ECE               8.1
+         3 Kavya        CSE              7.8
+
+Query 9 Output (Set Union Operation)
+
+COURSE_ID  TITLE        DEPT_ID       CREDITS
+---------- ------------ ---------- ----------
+CS301      DBMS         CSE                 4
+EC201      Circuits     ECE                 3
+
+Query 10 Output (Multi-Table Join Query)
+
+NAME        
+------------
+Priya       
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

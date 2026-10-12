@@ -1,0 +1,108 @@
+Ex. 10
+GnuPG: Secure Data Storage, Transmission and Digital Signatures
+AIM: To use GnuPG (GNU Privacy Guard) for encrypting files (secure storage), creating secure channels
+(transmission), and generating digital signatures.
+
+Theory
+• GnuPG (GPG) is a free, open-source implementation of the OpenPGP standard (RFC 4880).
+• Uses hybrid encryption: RSA/DSA for key exchange, AES for data encryption.
+• Provides: Encryption, Decryption, Digital Signatures, Key Management.
+• Web of Trust (WoT): Keys signed by trusted parties to establish authenticity.
+• Symmetric (AES-256) or Asymmetric (RSA-4096) encryption.
+• Common use: Email encryption, file protection, software package signing.
+Part A – Key Generation and Management
+All commands below are terminal/command prompt commands, not MySQL or Python.
+# ─── INSTALL GnuPG ───────────────────────────────────
+# Ubuntu/Kali: sudo apt-get install gnupg
+# Windows: Download Gpg4win from gpg4win.org
+# macOS: brew install gnupg
+# ─── GENERATE A KEY PAIR ─────────────────────────────
+gpg --gen-key
+# Follow prompts:
+# Key type : RSA and RSA (default)
+# Key size : 4096
+# Expiry : 0 (never)
+# Real name : Alice
+# Email : alice@scsvmv.edu
+# Passphrase : (enter strong passphrase)
+# ─── LIST KEYS ───────────────────────────────────────
+gpg --list-keys # List all public keys
+gpg --list-secret-keys # List private keys
+# ─── EXPORT PUBLIC KEY (share with others) ───────────
+gpg --armor --export alice@scsvmv.edu > alice_public.asc
+# --armor: ASCII text format (safe to email)
+# ─── IMPORT ANOTHER USER'S PUBLIC KEY ─────────────────
+gpg --import bob_public.asc
+# ─── VERIFY KEY FINGERPRINT ──────────────────────────
+gpg --fingerprint alice@scsvmv.edu
+Part B – Secure Data Storage (File Encryption)
+# ─── CREATE A TEST FILE ──────────────────────────────
+echo "Confidential: Student grade sheet for CSE batch" > secret.txt
+# ─── ENCRYPT FILE (Asymmetric — recipient's public key) ──
+gpg --encrypt --recipient bob@scsvmv.edu --armor secret.txt
+# Creates: secret.txt.asc (encrypted — only Bob can decrypt)
+# ─── ENCRYPT FILE (Symmetric — password-based) ──────────
+gpg --symmetric --cipher-algo AES256 --armor secret.txt
+
+# Creates: secret.txt.asc (encrypted with AES-256)
+# Enter passphrase when prompted
+# ─── DECRYPT FILE (Asymmetric) ───────────────────────
+gpg --decrypt --output decrypted_secret.txt secret.txt.asc
+# Must have private key for bob@scsvmv.edu
+# ─── DECRYPT FILE (Symmetric) ────────────────────────
+gpg --decrypt secret.txt.asc > decrypted.txt
+# ─── VIEW ENCRYPTED FILE ─────────────────────────────
+cat secret.txt.asc
+# Output shows: -----BEGIN PGP MESSAGE-----
+# ... Base64 encoded ciphertext ...
+# -----END PGP MESSAGE-----
+Part C – Secure Data Transmission
+# Scenario: Alice encrypts for Bob and signs with her key
+# ─── ENCRYPT AND SIGN (for secure transmission) ──────
+gpg --encrypt --sign --recipient bob@scsvmv.edu \
+--local-user alice@scsvmv.edu --armor secret.txt
+# Creates: secret.txt.asc (encrypted + signed)
+# ─── DECRYPT AND VERIFY (at receiver's end) ──────────
+gpg --decrypt --output received.txt secret.txt.asc
+# Shows: gpg: Signature made... using RSA
+# gpg: Good signature from "Alice"
+# Python integration using python-gnupg library:
+# pip install python-gnupg
+import gnupg
+gpg = gnupg.GPG()
+# Encrypt message
+message = "Confidential student data"
+encrypted = gpg.encrypt(message, recipients=["bob@scsvmv.edu"])
+print("Encrypted:", str(encrypted)[:80], "...")
+print("Encrypt OK:", encrypted.ok)
+# Decrypt message
+decrypted = gpg.decrypt(str(encrypted), passphrase="BobPassphrase")
+print("Decrypted:", str(decrypted))
+Part D – Digital Signatures with GPG
+# ─── SIGN A FILE (creates detached signature) ────────
+gpg --detach-sign --armor --local-user alice@scsvmv.edu document.pdf
+# Creates: document.pdf.asc (signature file)
+# ─── VERIFY SIGNATURE ────────────────────────────────
+gpg --verify document.pdf.asc document.pdf
+# Good output:
+# gpg: Signature made Thu 15 Jan 2025
+# gpg: using RSA key ABCDEF1234567890
+# gpg: Good signature from "Alice <alice@scsvmv.edu>"
+# ─── SIGN AND EMBED IN ONE FILE ──────────────────────
+gpg --clearsign --local-user alice@scsvmv.edu message.txt
+# Creates: message.txt.asc (plaintext + signature embedded)
+
+# ─── VERIFY CLEAR-SIGNED FILE ────────────────────────
+gpg --verify message.txt.asc
+# ─── KEY TRUST MANAGEMENT ────────────────────────────
+gpg --edit-key bob@scsvmv.edu
+# gpg> trust (set trust level 5 = ultimate)
+# gpg> sign (sign their key)
+# gpg> quit
+# ─── REVOKE A KEY (if compromised) ───────────────────
+gpg --gen-revoke alice@scsvmv.edu > revoke.asc
+gpg --import revoke.asc # Publish revocation
+gpg: Signature made Thu 15 Jan 2025 10:30:00 IST
+gpg: using RSA key A1B2C3D4E5F67890
+gpg: Good signature from "Alice <alice@scsvmv.edu>" [ultimate]
+\

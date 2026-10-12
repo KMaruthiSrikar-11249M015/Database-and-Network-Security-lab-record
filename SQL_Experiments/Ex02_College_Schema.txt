@@ -1,0 +1,161 @@
+EXP-2
+
+-- ── 1. TABLE CREATION ──────────────────────────────────
+
+CREATE TABLE Department (
+    dept_id INT PRIMARY KEY,
+    dept_name VARCHAR2(50) NOT NULL,
+    location VARCHAR2(30)
+);
+
+CREATE TABLE Student (
+    student_id INT PRIMARY KEY,
+    name VARCHAR2(50) NOT NULL,
+    dob DATE,
+    phone VARCHAR2(15),
+    dept_id INT,
+    cgpa NUMBER(4,2),
+    FOREIGN KEY (dept_id) REFERENCES Department(dept_id)
+);
+
+CREATE TABLE Faculty (
+    faculty_id INT PRIMARY KEY,
+    name VARCHAR2(50),
+    designation VARCHAR2(30),
+    dept_id INT,
+    FOREIGN KEY (dept_id) REFERENCES Department(dept_id)
+);
+
+CREATE TABLE Course (
+    course_id VARCHAR2(10) PRIMARY KEY,
+    title VARCHAR2(80) NOT NULL,
+    credits INT,
+    dept_id INT,
+    FOREIGN KEY (dept_id) REFERENCES Department(dept_id)
+);
+
+CREATE TABLE Enrollment (
+    student_id INT,
+    course_id VARCHAR2(10),
+    semester VARCHAR2(10),
+    grade CHAR(2),
+    PRIMARY KEY (student_id, course_id, semester),
+    FOREIGN KEY (student_id) REFERENCES Student(student_id),
+    FOREIGN KEY (course_id) REFERENCES Course(course_id)
+);
+
+CREATE TABLE Teaches (
+    faculty_id INT,
+    course_id VARCHAR2(10),
+    semester VARCHAR2(10),
+    PRIMARY KEY (faculty_id, course_id, semester),
+    FOREIGN KEY (faculty_id) REFERENCES Faculty(faculty_id),
+    FOREIGN KEY (course_id) REFERENCES Course(course_id)
+);
+
+
+-- ── 2. DATA INSERTION ──────────────────────────────────
+
+-- Oracle requires separate INSERT statements for each row
+INSERT INTO Department VALUES (1, 'CSE', 'Block A');
+INSERT INTO Department VALUES (2, 'ECE', 'Block B');
+
+INSERT INTO Student VALUES (101, 'Priya', TO_DATE('2005-05-10', 'YYYY-MM-DD'), '9876543210', 1, 9.20);
+INSERT INTO Faculty VALUES (201, 'Dr Sharma', 'Professor', 1);
+INSERT INTO Course VALUES ('CS301', 'Database Systems', 4, 1);
+INSERT INTO Enrollment VALUES (101, 'CS301', 'S5', 'A');
+INSERT INTO Teaches VALUES (201, 'CS301', 'S5');
+
+COMMIT;
+
+
+-- ── 3. DATA VERIFICATION & QUERIES ─────────────────────
+
+-- SQL*Plus Formatting commands for clean output terminal layout
+SET PAGESIZE 50;
+SET LINESIZE 120;
+COLUMN dept_name FORMAT A15;
+COLUMN location FORMAT A15;
+COLUMN name FORMAT A15;
+COLUMN designation FORMAT A15;
+COLUMN title FORMAT A20;
+
+SELECT * FROM Department;
+SELECT * FROM Student;
+SELECT * FROM Faculty;
+SELECT * FROM Course;
+SELECT * FROM Enrollment;
+SELECT * FROM Teaches;
+
+
+----------------------
+OUTPUT
+----------------------
+
+Department Table
+
+   DEPT_ID DEPT_NAME       LOCATION       
+---------- --------------- ---------------
+         1 CSE             Block A        
+         2 ECE             Block B        
+
+Student Table
+
+STUDENT_ID NAME            DOB       PHONE             DEPT_ID       CGPA
+---------- --------------- --------- --------------- ---------- ----------
+       101 Priya           10-MAY-05 9876543210               1        9.2
+
+Faculty Table
+
+FACULTY_ID NAME            DESIGNATION        DEPT_ID
+---------- --------------- --------------- ----------
+       201 Dr Sharma       Professor                1
+
+Course Table
+
+COURSE_ID  TITLE                   CREDITS    DEPT_ID
+---------- -------------------- ---------- ----------
+CS301      Database Systems              4          1
+
+Enrollment Table
+
+STUDENT_ID COURSE_ID  SEMESTER   GR
+---------- ---------- ---------- --
+       101 CS301      S5         A 
+
+Teaches Table
+
+FACULTY_ID COURSE_ID  SEMESTER  
+---------- ---------- ----------
+       201 CS301      S5        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
